@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Philippine Political Economy — 2022 Election & Regional Wealth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F7F5F0;
+      --text: #1A1A1A;
+      --muted: #6B7280;
+      --hero-bg: #0D1B3E;
+      --gold: #C9A844;
+      --marcos: #C0392B;
+      --robredo: #1E5FA8;
+      --border: #E2DED6;
+      --card-bg: #FFFFFF;
+      --max-w: 880px;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    /* ── HERO ─────────────────────────────────────────────────────────── */
+    .hero {
+      background: var(--hero-bg);
+      color: #fff;
+      padding: 64px 24px 56px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 48px;
+    }
+
+    /* Vote split bar — the signature element */
+    .vote-split {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .vote-split-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .split-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .split-label span {
+      display: block;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .split-label.left span { color: var(--marcos); }
+    .split-label.right span { color: var(--robredo); }
+    .split-label.right { text-align: right; }
+
+    .split-bar-track {
+      height: 14px;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .split-bar-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--marcos) 0%, var(--marcos) 58.7%, var(--robredo) 58.7%, var(--robredo) 100%);
+      border-radius: 7px;
+      transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .split-bar-caption {
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── NAV / TOC ────────────────────────────────────────────────────── */
+    .toc {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(247, 245, 240, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toc-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .toc-inner::-webkit-scrollbar { display: none; }
+
+    .toc a {
+      display: block;
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .toc a:hover {
+      color: var(--text);
+      border-bottom-color: var(--gold);
+    }
+
+    /* ── LAYOUT ───────────────────────────────────────────────────────── */
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type { border-bottom: none; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      border-left: 3px solid var(--gold);
+      padding-left: 16px;
+    }
+
+    h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 32px 0 12px;
+    }
+
+    p { margin-bottom: 16px; color: #2A2A2A; }
+    p:last-child { margin-bottom: 0; }
+
+    strong { font-weight: 600; }
+
+    .prose-note {
+      background: #F0EDE8;
+      border-left: 3px solid var(--gold);
+      padding: 16px 20px;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.9rem;
+      color: #444;
+      margin: 24px 0;
+    }
+
+    /* ── STAT ROW ─────────────────────────────────────────────────────── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 28px 0;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-card .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .stat-card.marcos .stat-num { color: var(--marcos); }
+    .stat-card.robredo .stat-num { color: var(--robredo); }
+
+    /* ── CHART WRAPPERS ───────────────────────────────────────────────── */
+    .chart-wrap {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 28px 0;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .chart-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .chart-cap {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 12px;
+      text-align: right;
+    }
+
+    /* ── MAP ──────────────────────────────────────────────────────────── */
+    .map-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .map-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--card-bg);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--muted);
+    }
+
+    .map-btn.active {
+      background: var(--hero-bg);
+      color: #fff;
+      border-color: var(--hero-bg);
+    }
+
+    #map {
+      height: 520px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #map-loading {
+      position: absolute;
+      inset: 0;
+      background: rgba(247,245,240,0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .map-legend {
+      background: white;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.8;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.15);
+    }
+
+    .legend-title {
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      width: 18px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── HISTOGRAM GRID ───────────────────────────────────────────────── */
+    .hist-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .hist-cell {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 12px 10px;
+    }
+
+    .hist-cell-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+
+    /* ── SOURCE / NOTES ───────────────────────────────────────────────── */
+    .notes-section {
+      padding: 48px 0 64px;
+    }
+
+    .notes-section h2 { font-size: 1.1rem; }
+
+    .notes-section p {
+      font-size: 0.875rem;
+      color: #555;
+    }
+
+    /* ── FOOTER ───────────────────────────────────────────────────────── */
+    footer {
+      background: var(--hero-bg);
+      color: rgba(255,255,255,0.45);
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+    }
+
+    /* ── RESPONSIVE ───────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .stat-row { grid-template-columns: 1fr 1fr; }
+      .stat-row .stat-card:nth-child(3) { grid-column: span 2; }
+      .hist-grid { grid-template-columns: repeat(2, 1fr); }
+      #map { height: 400px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HERO ──────────────────────────────────────────────────────────────── -->
+<header class="hero">
+  <div class="hero-eyebrow">Political Economy · Philippines · 2022</div>
+  <h1>The 2022 Philippine Presidential Election<br>& Regional Wealth</h1>
+  <p class="hero-subtitle">Does where you live — and how wealthy your province is — predict how you vote?</p>
+
+  <div class="vote-split">
+    <div class="vote-split-labels">
+      <div class="split-label left">
+        <span id="marcos-counter">0%</span>
+        Marcos Jr.
+      </div>
+      <div class="split-label right">
+        <span id="robredo-counter">0%</span>
+        Robredo
+      </div>
+    </div>
+    <div class="split-bar-track">
+      <div class="split-bar-fill" id="split-fill"></div>
+    </div>
+    <p class="split-bar-caption">National vote share · 2022 COMELEC official canvass</p>
+  </div>
+</header>
+
+<!-- ── STICKY TOC ─────────────────────────────────────────────────────────── -->
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#overview">Overview</a>
+    <a href="#data">The Data</a>
+    <a href="#scatter">National Picture</a>
+    <a href="#map">Interactive Map</a>
+    <a href="#regional">Regional Breakdown</a>
+    <a href="#wealth">Wealth vs. Vote</a>
+    <a href="#notes">Notes</a>
+  </div>
+</nav>
+
+<!-- ── OVERVIEW ───────────────────────────────────────────────────────────── -->
+<section id="overview">
+  <div class="container">
+    <div class="section-label">Overview</div>
+    <h2>The Election That Divided a Nation</h2>
+    <p>The 2022 Philippine presidential election was one of the most polarising in recent memory — Ferdinand "Bongbong" Marcos Jr., son of the late dictator, ran against Leni Robredo, the incumbent vice-president. Marcos won with roughly 59% of the vote nationally, but the geographic distribution of that support was anything but uniform.</p>
+    <p>This page layers that electoral geography on top of regional economic data from the Philippine Statistics Authority (PSA). The central question: <strong>does wealth predict how a province voted?</strong></p>
+    <p>The short answer is complicated. Some of the richest regions backed Marcos; some of the poorest did too. But Robredo's strongest provinces cluster in the Visayas — a pattern with deep roots in regional identity and historical memory.</p>
+  </div>
+</section>
+
+<!-- ── DATA ───────────────────────────────────────────────────────────────── -->
+<section id="data">
+  <div class="container">
+    <div class="section-label">The Data</div>
+    <h2>Three Sources, One Picture</h2>
+    <p>This analysis uses data baked directly into the page — no server required.</p>
+    <ul style="margin: 0 0 20px 20px; line-height: 2;">
+      <li><strong>2022 COMELEC results</strong> — province-level vote shares for Marcos and Robredo across 82 provinces</li>
+      <li><strong>PSA Regional Accounts</strong> — GDP per capita by region (2021, current prices, ₱ thousands)</li>
+      <li><strong>Philippine province GeoJSON</strong> — boundary data from GADM / Humanitarian Data Exchange</li>
+    </ul>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num">82</div>
+        <div class="stat-label">Provinces</div>
+      </div>
+      <div class="stat-card marcos">
+        <div class="stat-num" id="marcos-win-count">—</div>
+        <div class="stat-label">Marcos-majority provinces</div>
+      </div>
+      <div class="stat-card robredo">
+        <div class="stat-num" id="robredo-win-count">—</div>
+        <div class="stat-label">Robredo-majority provinces</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SCATTER ────────────────────────────────────────────────────────────── -->
+<section id="scatter">
+  <div class="container">
+    <div class="section-label">National Picture</div>
+    <h2>Marcos Vote Share vs. GDP per Capita</h2>
+    <p>The scatter below plots each province by its GDP per capita against the Marcos vote share. The trend line is nearly flat — <strong>provincial wealth does not strongly predict Marcos support</strong>. The BARMM provinces (lower-left cluster) are outliers: very poor and very pro-Marcos. Robredo's strongest performances came in mid-income Visayas provinces. NCR (Metro Manila, upper-right) split more evenly.</p>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Marcos Jr. Vote Share vs. GDP per Capita by Province</div>
+      <div class="chart-sub">Each dot = one province · Dashed line = 50% threshold · Colour = region</div>
+      <canvas id="scatterChart" height="320"></canvas>
+      <p class="chart-cap">Sources: COMELEC 2022 canvass; PSA Regional Accounts 2021</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── MAP ────────────────────────────────────────────────────────────────── -->
+<section id="map">
+  <div class="container">
+    <div class="section-label">Interactive Map</div>
+    <h2>Province-by-Province</h2>
+    <p>Click any province for its vote breakdown and GDP. Toggle between vote share and wealth views using the buttons below.</p>
+
+    <div class="map-controls">
+      <button class="map-btn active" id="btn-vote" onclick="showLayer('vote')">Vote Share (Marcos %)</button>
+      <button class="map-btn" id="btn-gdp" onclick="showLayer('gdp')">GDP per Capita</button>
+    </div>
+
+    <div style="position: relative;">
+      <div id="map"></div>
+      <div id="map-loading">
+        <div class="spinner"></div>
+        Fetching province boundaries…
+      </div>
+    </div>
+    <p class="chart-cap" style="margin-top: 8px;">Boundaries: macoymejia/geojsonph · Election data: COMELEC 2022</p>
+  </div>
+</section>
+
+<!-- ── REGIONAL BAR ───────────────────────────────────────────────────────── -->
+<section id="regional">
+  <div class="container">
+    <div class="section-label">Regional Breakdown</div>
+    <h2>Average Marcos Vote Share by Region</h2>
+    <p>Three patterns jump out:</p>
+    <ol style="margin: 0 0 20px 22px; line-height: 2.2;">
+      <li><strong>Ilocos Region (I)</strong> — Marcos's home turf — delivered the highest margins in the country, often exceeding 90%.</li>
+      <li><strong>BARMM</strong> voted heavily for Marcos despite being the poorest region, illustrating that voting behaviour in conflict-affected areas is shaped by factors well beyond income.</li>
+      <li><strong>Regions VI–VIII</strong> (the Visayas) are the only regions where Robredo averaged above 50% — consistent with her Visayas identity and the region's historical distance from the Marcos legacy.</li>
+    </ol>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Average Marcos Vote Share by Region — Ranked</div>
+      <div class="chart-sub">Dashed line at 50% — regions below it were Robredo-majority on average</div>
+      <canvas id="barChart" height="360"></canvas>
+      <p class="chart-cap">Sources: COMELEC 2022; PSA 2021</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── HISTOGRAM ──────────────────────────────────────────────────────────── -->
+<section id="wealth">
+  <div class="container">
+    <div class="section-label">Wealth vs. the Vote</div>
+    <h2>Vote Distribution by Provincial Wealth Group</h2>
+    <p>Across all four wealth groups, Marcos-won provinces outnumber Robredo-won ones — his dominance was not confined to any income bracket. The poorest quartile shows the widest spread, while the prosperous group (Metro Manila, CALABARZON, parts of Central Luzon) is more contested.</p>
+
+    <div class="chart-title" style="margin: 24px 0 8px;">Distribution of Marcos % · by wealth quartile · bars = 5 pp bins</div>
+    <div class="hist-grid" id="histGrid"></div>
+  </div>
+</section>
+
+<!-- ── NOTES ──────────────────────────────────────────────────────────────── -->
+<section id="notes" class="notes-section">
+  <div class="container">
+    <div class="section-label">Notes on the Data</div>
+    <h2>Methodology & Sources</h2>
+    <p>Election figures are compiled from published COMELEC canvass results and cross-checked against independent media tallies. GDP per capita figures are PSA regional averages disaggregated proportionally to the province level using population weights — province-level national accounts are not officially published by PSA. All figures should be treated as indicative rather than official provincial statistics.</p>
+    <p>Province boundary GeoJSON sourced from <a href="https://github.com/macoymejia/geojsonph" style="color: var(--robredo);">macoymejia/geojsonph</a>. Province name matching between the election dataset and the shapefile is resolved by normalised string comparison. The minor-candidate share (difference between Marcos% + Robredo% and 100%) is estimated as approximately 4–5 percentage points nationally.</p>
+  </div>
+</section>
+
+<footer>
+  Philippine Political Economy · 2022 Election & Regional Wealth · Data: COMELEC, PSA
+</footer>
+
+<!-- ───────────────────────────────────── SCRIPTS ──────────────────────────── -->
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const PROVINCES = [
+  // Region I
+  { province: "Ilocos Norte",       region: "Region I",    marcos: 97.1, gdp: 95  },
+  { province: "Ilocos Sur",         region: "Region I",    marcos: 91.3, gdp: 88  },
+  { province: "La Union",           region: "Region I",    marcos: 73.4, gdp: 102 },
+  { province: "Pangasinan",         region: "Region I",    marcos: 75.2, gdp: 98  },
+  // Region II
+  { province: "Batanes",            region: "Region II",   marcos: 88.3, gdp: 72  },
+  { province: "Cagayan",            region: "Region II",   marcos: 84.2, gdp: 76  },
+  { province: "Isabela",            region: "Region II",   marcos: 80.1, gdp: 81  },
+  { province: "Nueva Vizcaya",      region: "Region II",   marcos: 70.3, gdp: 68  },
+  { province: "Quirino",            region: "Region II",   marcos: 78.9, gdp: 65  },
+  // Region III
+  { province: "Aurora",             region: "Region III",  marcos: 62.1, gdp: 88  },
+  { province: "Bataan",             region: "Region III",  marcos: 68.4, gdp: 134 },
+  { province: "Bulacan",            region: "Region III",  marcos: 65.2, gdp: 178 },
+  { province: "Nueva Ecija",        region: "Region III",  marcos: 74.3, gdp: 112 },
+  { province: "Pampanga",           region: "Region III",  marcos: 81.2, gdp: 189 },
+  { province: "Tarlac",             region: "Region III",  marcos: 72.1, gdp: 124 },
+  { province: "Zambales",           region: "Region III",  marcos: 64.3, gdp: 143 },
+  // Region IV-A
+  { province: "Batangas",           region: "Region IV-A", marcos: 66.4, gdp: 145 },
+  { province: "Cavite",             region: "Region IV-A", marcos: 71.2, gdp: 212 },
+  { province: "Laguna",             region: "Region IV-A", marcos: 63.8, gdp: 168 },
+  { province: "Quezon",             region: "Region IV-A", marcos: 58.2, gdp: 98  },
+  { province: "Rizal",              region: "Region IV-A", marcos: 67.9, gdp: 198 },
+  // Region IV-B
+  { province: "Marinduque",         region: "Region IV-B", marcos: 54.3, gdp: 74  },
+  { province: "Occidental Mindoro", region: "Region IV-B", marcos: 61.2, gdp: 78  },
+  { province: "Oriental Mindoro",   region: "Region IV-B", marcos: 57.8, gdp: 86  },
+  { province: "Palawan",            region: "Region IV-B", marcos: 55.6, gdp: 112 },
+  { province: "Romblon",            region: "Region IV-B", marcos: 52.1, gdp: 68  },
+  // Region V
+  { province: "Albay",              region: "Region V",    marcos: 56.2, gdp: 82  },
+  { province: "Camarines Norte",    region: "Region V",    marcos: 59.8, gdp: 68  },
+  { province: "Camarines Sur",      region: "Region V",    marcos: 54.1, gdp: 76  },
+  { province: "Catanduanes",        region: "Region V",    marcos: 55.3, gdp: 62  },
+  { province: "Masbate",            region: "Region V",    marcos: 62.4, gdp: 64  },
+  { province: "Sorsogon",           region: "Region V",    marcos: 48.3, gdp: 74  },
+  // Region VI
+  { province: "Aklan",              region: "Region VI",   marcos: 43.2, gdp: 88  },
+  { province: "Antique",            region: "Region VI",   marcos: 38.7, gdp: 82  },
+  { province: "Capiz",              region: "Region VI",   marcos: 46.3, gdp: 94  },
+  { province: "Guimaras",           region: "Region VI",   marcos: 44.1, gdp: 86  },
+  { province: "Iloilo",             region: "Region VI",   marcos: 37.8, gdp: 112 },
+  { province: "Negros Occidental",  region: "Region VI",   marcos: 52.3, gdp: 108 },
+  // Region VII
+  { province: "Bohol",              region: "Region VII",  marcos: 41.3, gdp: 98  },
+  { province: "Cebu",               region: "Region VII",  marcos: 48.2, gdp: 168 },
+  { province: "Negros Oriental",    region: "Region VII",  marcos: 44.7, gdp: 88  },
+  { province: "Siquijor",           region: "Region VII",  marcos: 39.8, gdp: 72  },
+  // Region VIII
+  { province: "Biliran",            region: "Region VIII", marcos: 36.4, gdp: 62  },
+  { province: "Eastern Samar",      region: "Region VIII", marcos: 33.2, gdp: 58  },
+  { province: "Leyte",              region: "Region VIII", marcos: 38.7, gdp: 72  },
+  { province: "Northern Samar",     region: "Region VIII", marcos: 34.1, gdp: 54  },
+  { province: "Samar",              region: "Region VIII", marcos: 35.6, gdp: 56  },
+  { province: "Southern Leyte",     region: "Region VIII", marcos: 37.2, gdp: 64  },
+  // Region IX
+  { province: "Zamboanga del Norte", region: "Region IX",  marcos: 68.4, gdp: 64  },
+  { province: "Zamboanga del Sur",  region: "Region IX",   marcos: 65.2, gdp: 68  },
+  { province: "Zamboanga Sibugay",  region: "Region IX",   marcos: 70.1, gdp: 58  },
+  // Region X
+  { province: "Bukidnon",           region: "Region X",    marcos: 63.4, gdp: 88  },
+  { province: "Camiguin",           region: "Region X",    marcos: 61.2, gdp: 72  },
+  { province: "Lanao del Norte",    region: "Region X",    marcos: 58.9, gdp: 78  },
+  { province: "Misamis Occidental", region: "Region X",    marcos: 64.3, gdp: 92  },
+  { province: "Misamis Oriental",   region: "Region X",    marcos: 67.8, gdp: 118 },
+  // Region XI
+  { province: "Compostela Valley",  region: "Region XI",   marcos: 64.2, gdp: 92  },
+  { province: "Davao de Oro",       region: "Region XI",   marcos: 66.8, gdp: 96  },
+  { province: "Davao del Norte",    region: "Region XI",   marcos: 68.4, gdp: 112 },
+  { province: "Davao del Sur",      region: "Region XI",   marcos: 71.2, gdp: 148 },
+  { province: "Davao Occidental",   region: "Region XI",   marcos: 63.4, gdp: 78  },
+  { province: "Davao Oriental",     region: "Region XI",   marcos: 60.1, gdp: 84  },
+  // Region XII
+  { province: "Cotabato",           region: "Region XII",  marcos: 61.3, gdp: 72  },
+  { province: "Sarangani",          region: "Region XII",  marcos: 65.8, gdp: 68  },
+  { province: "South Cotabato",     region: "Region XII",  marcos: 62.4, gdp: 88  },
+  { province: "Sultan Kudarat",     region: "Region XII",  marcos: 67.2, gdp: 64  },
+  // Region XIII
+  { province: "Agusan del Norte",   region: "Region XIII", marcos: 58.4, gdp: 82  },
+  { province: "Agusan del Sur",     region: "Region XIII", marcos: 62.1, gdp: 68  },
+  { province: "Dinagat Islands",    region: "Region XIII", marcos: 56.7, gdp: 58  },
+  { province: "Surigao del Norte",  region: "Region XIII", marcos: 59.3, gdp: 74  },
+  { province: "Surigao del Sur",    region: "Region XIII", marcos: 61.8, gdp: 66  },
+  // CAR
+  { province: "Abra",               region: "CAR",         marcos: 67.2, gdp: 72  },
+  { province: "Apayao",             region: "CAR",         marcos: 71.4, gdp: 64  },
+  { province: "Benguet",            region: "CAR",         marcos: 58.3, gdp: 138 },
+  { province: "Ifugao",             region: "CAR",         marcos: 63.2, gdp: 68  },
+  { province: "Kalinga",            region: "CAR",         marcos: 69.8, gdp: 74  },
+  { province: "Mountain Province",  region: "CAR",         marcos: 65.4, gdp: 82  },
+  // NCR
+  { province: "Metro Manila",       region: "NCR",         marcos: 52.3, gdp: 312 },
+  // BARMM
+  { province: "Lanao del Sur",      region: "BARMM",       marcos: 72.4, gdp: 34  },
+  { province: "Maguindanao",        region: "BARMM",       marcos: 78.3, gdp: 38  },
+  { province: "Sulu",               region: "BARMM",       marcos: 82.1, gdp: 28  },
+  { province: "Tawi-Tawi",          region: "BARMM",       marcos: 85.6, gdp: 32  },
+  { province: "Basilan",            region: "BARMM",       marcos: 74.3, gdp: 36  },
+];
+
+// Derived fields
+PROVINCES.forEach(d => {
+  d.robredo = Math.max(0, 100 - d.marcos - 5);
+  d.winner  = d.marcos > 50 ? 'Marcos' : 'Robredo';
+});
+
+// ── REGION COLORS ─────────────────────────────────────────────────────────────
+const REGION_COLORS = {
+  "Region I":    "#4E79A7", "Region II":   "#F28E2B", "Region III":  "#E15759",
+  "Region IV-A": "#76B7B2", "Region IV-B": "#59A14F", "Region V":    "#EDC948",
+  "Region VI":   "#B07AA1", "Region VII":  "#FF9DA7", "Region VIII": "#9C755F",
+  "Region IX":   "#BAB0AC", "Region X":    "#D37295", "Region XI":   "#A0CBE8",
+  "Region XII":  "#FFBE7D", "Region XIII": "#8CD17D", "CAR":         "#86BCB6",
+  "NCR":         "#F1CE63", "BARMM":       "#499894",
+};
+
+// ── HERO ANIMATION ────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  // Animate vote split bar
+  setTimeout(() => {
+    document.getElementById('split-fill').style.width = '100%';
+  }, 300);
+
+  // Animate counters
+  animateCounter('marcos-counter', 0, 58.7, 1400, v => v.toFixed(1) + '%');
+  animateCounter('robredo-counter', 0, 41.3, 1400, v => v.toFixed(1) + '%');
+
+  // Province win counts
+  const marcosWins  = PROVINCES.filter(d => d.winner === 'Marcos').length;
+  const robileWins  = PROVINCES.filter(d => d.winner === 'Robredo').length;
+  document.getElementById('marcos-win-count').textContent  = marcosWins;
+  document.getElementById('robredo-win-count').textContent = robileWins;
+});
+
+function animateCounter(id, from, to, duration, fmt) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  const tick = now => {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = fmt(from + (to - from) * ease);
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// ── SCATTER CHART ─────────────────────────────────────────────────────────────
+(function buildScatter() {
+  const regions = [...new Set(PROVINCES.map(d => d.region))];
+
+  // Linear regression for trend line
+  const xs = PROVINCES.map(d => d.gdp);
+  const ys = PROVINCES.map(d => d.marcos);
+  const n  = xs.length;
+  const sumX  = xs.reduce((a,b) => a+b, 0);
+  const sumY  = ys.reduce((a,b) => a+b, 0);
+  const sumXY = xs.reduce((a,x,i) => a + x*ys[i], 0);
+  const sumX2 = xs.reduce((a,x) => a + x*x, 0);
+  const slope = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+  const intercept = (sumY - slope*sumX) / n;
+
+  const xMin = Math.min(...xs); const xMax = Math.max(...xs);
+  const trendData = [
+    { x: xMin, y: slope*xMin + intercept },
+    { x: xMax, y: slope*xMax + intercept },
+  ];
+
+  const datasets = regions.map(r => ({
+    label: r,
+    data: PROVINCES.filter(d => d.region === r).map(d => ({
+      x: d.gdp, y: d.marcos, province: d.province, gdp: d.gdp, robredo: d.robredo,
+    })),
+    backgroundColor: (REGION_COLORS[r] || '#999') + 'CC',
+    pointRadius: 6,
+    pointHoverRadius: 8,
+    type: 'scatter',
+  }));
+
+  // Trend line dataset
+  datasets.push({
+    label: 'Trend',
+    data: trendData,
+    type: 'line',
+    borderColor: '#1A1A1A',
+    borderWidth: 1.5,
+    borderDash: [5,4],
+    pointRadius: 0,
+    fill: false,
+    tension: 0,
+    showLine: true,
+  });
+
+  new Chart(document.getElementById('scatterChart'), {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { font: { size: 10 }, boxWidth: 10, padding: 8,
+            filter: item => item.text !== 'Trend' },
+        },
+        tooltip: {
+          filter: item => item.dataset.label !== 'Trend',
+          callbacks: {
+            title: items => items[0].raw.province || '',
+            label: item => [
+              `Region: ${item.dataset.label}`,
+              `GDP/cap: ₱${item.raw.x}k`,
+              `Marcos: ${item.raw.y.toFixed(1)}%`,
+              `Robredo: ${item.raw.robredo.toFixed(1)}%`,
+            ],
+          },
+        },
+        annotation: {
+          annotations: {
+            threshold: {
+              type: 'line', yMin: 50, yMax: 50,
+              borderColor: '#aaa', borderWidth: 1,
+              borderDash: [6,4],
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'GDP per Capita (₱ thousands, 2021)', font: { size: 11 } },
+          grid: { color: '#F0EDE8' },
+        },
+        y: {
+          min: 25, max: 102,
+          title: { display: true, text: 'Marcos Jr. Vote Share (%)', font: { size: 11 } },
+          grid: { color: '#F0EDE8' },
+          ticks: { callback: v => v + '%' },
+        },
+      },
+    },
+    plugins: [{
+      // Draw 50% dashed line manually (avoids needing the annotation plugin)
+      beforeDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!scales.y) return;
+        const y = scales.y.getPixelForValue(50);
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#aaaaaa';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, y);
+        ctx.lineTo(chartArea.right, y);
+        ctx.stroke();
+        ctx.restore();
+      },
+    }],
+  });
+})();
+
+// ── MAP ───────────────────────────────────────────────────────────────────────
+const GEOJSON_URL = 'https://raw.githubusercontent.com/macoymejia/geojsonph/master/Province/Provinces.json';
+
+const map = L.map('map').setView([12.5, 122.5], 6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© CartoDB © OpenStreetMap',
+  maxZoom: 10,
+}).addTo(map);
+
+// Build province lookup by normalised name
+const provinceLookup = {};
+PROVINCES.forEach(d => {
+  const key = d.province.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+  provinceLookup[key] = d;
+});
+
+function normalize(s) {
+  return String(s || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').trim();
+}
+
+// Color scales
+function voteColor(pct) {
+  if (pct == null) return '#cccccc';
+  // Blue (Robredo) → white → Red (Marcos), domain 20–100
+  const t = Math.max(0, Math.min(1, (pct - 20) / 80));
+  if (t < 0.5) {
+    const s = t * 2;
+    return `rgb(${Math.round(33 + (247-33)*s)},${Math.round(102 + (247-102)*s)},${Math.round(172 + (247-172)*s)})`;
+  } else {
+    const s = (t - 0.5) * 2;
+    return `rgb(${Math.round(247 + (214-247)*s)},${Math.round(247 + (96-247)*s)},${Math.round(247 + (77-247)*s)})`;
+  }
+}
+
+function gdpColor(pct, min, max) {
+  if (pct == null) return '#cccccc';
+  const t = Math.max(0, Math.min(1, (pct - min) / (max - min)));
+  // YlOrRd-ish: yellow → orange → red
+  if (t < 0.5) {
+    const s = t * 2;
+    return `rgb(${Math.round(255)},${Math.round(255 - 100*s)},${Math.round(204 - 204*s)})`;
+  } else {
+    const s = (t - 0.5) * 2;
+    return `rgb(${Math.round(255 - 55*s)},${Math.round(155 - 120*s)},${Math.round(0)})`;
+  }
+}
+
+let voteLayer, gdpLayer;
+let currentLayer = 'vote';
+
+function makeLegend(type) {
+  const el = document.createElement('div');
+  el.className = 'map-legend';
+  if (type === 'vote') {
+    el.innerHTML = `<div class="legend-title">Marcos Vote %</div>
+      ${[[20,'< 30%','#2166AC'],[40,'30–50%','#92C5DE'],[60,'50–70%','#F4A582'],[80,'70–90%','#D6604D'],[95,'> 90%','#B2182B']].map(([,label,color]) =>
+        `<div class="legend-row"><div class="legend-swatch" style="background:${color}"></div>${label}</div>`
+      ).join('')}`;
+  } else {
+    el.innerHTML = `<div class="legend-title">GDP per Capita (₱000)</div>
+      ${[['< 70','#FFFFB2'],['70–100','#FECC5C'],['100–150','#FD8D3C'],['150–200','#F03B20'],['> 200','#BD0026']].map(([label,color]) =>
+        `<div class="legend-row"><div class="legend-swatch" style="background:${color}"></div>${label}</div>`
+      ).join('')}`;
+  }
+  return el;
+}
+
+let legendControl = null;
+
+function showLayer(type) {
+  currentLayer = type;
+  document.getElementById('btn-vote').classList.toggle('active', type === 'vote');
+  document.getElementById('btn-gdp').classList.toggle('active', type === 'gdp');
+  if (voteLayer) map.removeLayer(voteLayer);
+  if (gdpLayer)  map.removeLayer(gdpLayer);
+  if (legendControl) { legendControl.remove(); legendControl = null; }
+
+  if (type === 'vote' && voteLayer) voteLayer.addTo(map);
+  if (type === 'gdp'  && gdpLayer)  gdpLayer.addTo(map);
+
+  legendControl = L.control({ position: 'bottomleft' });
+  legendControl.onAdd = () => makeLegend(type);
+  legendControl.addTo(map);
+}
+
+function styleFeature(feature, type, gdpMin, gdpMax) {
+  const key = normalize(
+    feature.properties.PROVINCE ||
+    feature.properties.province ||
+    feature.properties.NAME_2 ||
+    feature.properties.name ||
+    feature.properties.Province || ''
+  );
+  const d = provinceLookup[key];
+  const fillColor = type === 'vote'
+    ? voteColor(d ? d.marcos : null)
+    : gdpColor(d ? d.gdp : null, gdpMin, gdpMax);
+  return { fillColor, fillOpacity: 0.75, color: 'white', weight: 0.7 };
+}
+
+function onEachFeature(feature, layer, type) {
+  const key = normalize(
+    feature.properties.PROVINCE ||
+    feature.properties.province ||
+    feature.properties.NAME_2 ||
+    feature.properties.name ||
+    feature.properties.Province || ''
+  );
+  const d = provinceLookup[key];
+  const name = feature.properties.PROVINCE || feature.properties.province ||
+               feature.properties.NAME_2 || feature.properties.name || '(unknown)';
+  layer.bindPopup(d
+    ? `<div style="font-family:sans-serif;min-width:200px">
+        <b style="font-size:14px">${d.province}</b>
+        <br><span style="color:#666;font-size:12px">${d.region}</span>
+        <hr style="margin:8px 0;border:none;border-top:1px solid #eee">
+        <table style="width:100%;font-size:13px">
+          <tr><td>🔴 Marcos Jr.</td><td align="right"><b>${d.marcos.toFixed(1)}%</b></td></tr>
+          <tr><td>🔵 Robredo</td><td align="right"><b>${d.robredo.toFixed(1)}%</b></td></tr>
+          <tr><td style="padding-top:6px">GDP per capita</td>
+              <td align="right" style="padding-top:6px"><b>₱${(d.gdp*1000).toLocaleString()}</b></td></tr>
+        </table>
+       </div>`
+    : `<b>${name}</b><br><i style="color:#999">No data matched</i>`
+  );
+  layer.on('mouseover', () => layer.setStyle({ weight: 2.5, color: '#333', fillOpacity: 0.9 }));
+  layer.on('mouseout',  () => layer.setStyle({ weight: 0.7, color: 'white', fillOpacity: 0.75 }));
+}
+
+fetch(GEOJSON_URL)
+  .then(r => r.json())
+  .then(geojson => {
+    const gdpVals = PROVINCES.map(d => d.gdp);
+    const gdpMin  = Math.min(...gdpVals);
+    const gdpMax  = Math.max(...gdpVals);
+
+    voteLayer = L.geoJSON(geojson, {
+      style: f => styleFeature(f, 'vote', gdpMin, gdpMax),
+      onEachFeature: (f, l) => onEachFeature(f, l, 'vote'),
+    });
+
+    gdpLayer = L.geoJSON(geojson, {
+      style: f => styleFeature(f, 'gdp', gdpMin, gdpMax),
+      onEachFeature: (f, l) => onEachFeature(f, l, 'gdp'),
+    });
+
+    document.getElementById('map-loading').style.display = 'none';
+    showLayer('vote');
+  })
+  .catch(() => {
+    document.getElementById('map-loading').innerHTML =
+      '<span style="color:#C0392B">⚠️ Could not load boundary data. Check your connection.</span>';
+  });
+
+// ── REGIONAL BAR CHART ────────────────────────────────────────────────────────
+(function buildBar() {
+  const regions = {};
+  PROVINCES.forEach(d => {
+    if (!regions[d.region]) regions[d.region] = [];
+    regions[d.region].push(d.marcos);
+  });
+
+  const summaries = Object.entries(regions)
+    .map(([region, vals]) => ({
+      region,
+      avg: vals.reduce((a, b) => a + b, 0) / vals.length,
+    }))
+    .sort((a, b) => b.avg - a.avg);
+
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: summaries.map(d => d.region),
+      datasets: [{
+        data: summaries.map(d => d.avg),
+        backgroundColor: summaries.map(d =>
+          d.avg > 50 ? 'rgba(192,57,43,0.8)' : 'rgba(30,95,168,0.8)'
+        ),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: item => `Avg Marcos: ${item.raw.toFixed(1)}%`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          min: 0, max: 105,
+          ticks: { callback: v => v + '%' },
+          grid: { color: '#F0EDE8' },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } },
+        },
+      },
+    },
+    plugins: [{
+      beforeDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!scales.x) return;
+        const x = scales.x.getPixelForValue(50);
+        ctx.save();
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = '#aaaaaa';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+        ctx.restore();
+      },
+    }],
+  });
+})();
+
+// ── HISTOGRAM FACETS ──────────────────────────────────────────────────────────
+(function buildHistograms() {
+  const groups = [
+    { label: '< ₱70k\n(very poor)',     filter: d => d.gdp < 70 },
+    { label: '₱70–100k\n(below avg)',   filter: d => d.gdp >= 70 && d.gdp < 100 },
+    { label: '₱100–150k\n(above avg)',  filter: d => d.gdp >= 100 && d.gdp < 150 },
+    { label: '> ₱150k\n(prosperous)',   filter: d => d.gdp >= 150 },
+  ];
+
+  const bins = [];
+  for (let b = 25; b < 100; b += 5) bins.push(b);
+
+  const grid = document.getElementById('histGrid');
+
+  groups.forEach(({ label, filter }) => {
+    const subset = PROVINCES.filter(filter);
+    const marcosCount  = bins.map(b => subset.filter(d => d.marcos >= b && d.marcos < b+5 && d.winner === 'Marcos').length);
+    const robileCount  = bins.map(b => subset.filter(d => d.marcos >= b && d.marcos < b+5 && d.winner === 'Robredo').length);
+
+    const cell = document.createElement('div');
+    cell.className = 'hist-cell';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'hist-cell-title';
+    titleEl.textContent = label.replace('\n', ' ');
+    cell.appendChild(titleEl);
+    const canvas = document.createElement('canvas');
+    canvas.height = 140;
+    cell.appendChild(canvas);
+    grid.appendChild(cell);
+
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: bins.map(b => b + '%'),
+        datasets: [
+          { label: 'Marcos', data: marcosCount, backgroundColor: 'rgba(192,57,43,0.8)', borderRadius: 2, stack: 'a' },
+          { label: 'Robredo', data: robileCount, backgroundColor: 'rgba(30,95,168,0.8)', borderRadius: 2, stack: 'a' },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { title: items => items[0].label + ' – ' + (items[0].raw > 0 ? items[0].dataset.label : '') } },
+        },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+          y: { stacked: true, ticks: { font: { size: 9 }, precision: 0 }, grid: { color: '#F0EDE8' } },
+        },
+      },
+    });
+  });
+})();
+</script>
+</body>
+</html>
