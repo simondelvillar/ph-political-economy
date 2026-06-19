@@ -385,6 +385,12 @@
       padding: 14px 12px 10px;
     }
 
+    .hist-canvas-wrap {
+      position: relative;
+      height: 140px;
+      width: 100%;
+    }
+
     .hist-cell-title {
       font-size: 11px;
       font-weight: 600;
@@ -1113,9 +1119,11 @@ function buildHistograms() {
     titleEl.className = 'hist-cell-title';
     titleEl.textContent = label.replace('\n', ' ');
     cell.appendChild(titleEl);
+    const canvasWrap = document.createElement('div');
+    canvasWrap.className = 'hist-canvas-wrap';
     const canvas = document.createElement('canvas');
-    canvas.height = 140;
-    cell.appendChild(canvas);
+    canvasWrap.appendChild(canvas);
+    cell.appendChild(canvasWrap);
     grid.appendChild(cell);
 
     new Chart(canvas, {
@@ -1123,8 +1131,8 @@ function buildHistograms() {
       data: {
         labels: bins.map(b => b + '%'),
         datasets: [
-          { label: 'Marcos', data: marcosCount, backgroundColor: 'rgba(192,57,43,0.8)', borderRadius: 2, stack: 'a' },
-          { label: 'Robredo', data: robileCount, backgroundColor: 'rgba(30,95,168,0.8)', borderRadius: 2, stack: 'a' },
+          { label: 'Marcos', data: marcosCount, backgroundColor: 'rgba(192,57,43,0.8)', borderRadius: 2, stack: 'a', barThickness: 14, maxBarThickness: 16 },
+          { label: 'Robredo', data: robileCount, backgroundColor: 'rgba(30,95,168,0.8)', borderRadius: 2, stack: 'a', barThickness: 14, maxBarThickness: 16 },
         ],
       },
       options: {
