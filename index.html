@@ -589,7 +589,7 @@
 </footer>
 
 <!-- ───────────────────────────────────── SCRIPTS ──────────────────────────── -->
-<script defer>
+<script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const PROVINCES = [
   // Region I
@@ -741,7 +741,7 @@ function animateCounter(id, from, to, duration, fmt) {
 }
 
 // ── SCATTER CHART ─────────────────────────────────────────────────────────────
-(function buildScatter() {
+function buildScatter() {
   const regions = [...new Set(PROVINCES.map(d => d.region))];
 
   // Linear regression for trend line
@@ -851,16 +851,19 @@ function animateCounter(id, from, to, duration, fmt) {
       },
     }],
   });
-})();
+}
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
 const GEOJSON_URL = 'https://raw.githubusercontent.com/macoymejia/geojsonph/master/Province/Provinces.json';
 
-const map = L.map('map').setView([12.5, 122.5], 6);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+let map;
+function initMap() {
+  map = L.map('map').setView([12.5, 122.5], 6);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '© CartoDB © OpenStreetMap',
   maxZoom: 10,
-}).addTo(map);
+  }).addTo(map);
+}
 
 // Build province lookup by normalised name
 const provinceLookup = {};
@@ -1016,10 +1019,8 @@ const mapObserver = new IntersectionObserver(entries => {
   }
 }, { rootMargin: '200px' });
 
-mapObserver.observe(document.getElementById('map'));
-
 // ── REGIONAL BAR CHART ────────────────────────────────────────────────────────
-(function buildBar() {
+function buildBar() {
   const regions = {};
   PROVINCES.forEach(d => {
     if (!regions[d.region]) regions[d.region] = [];
@@ -1085,10 +1086,10 @@ mapObserver.observe(document.getElementById('map'));
       },
     }],
   });
-})();
+}
 
 // ── HISTOGRAM FACETS ──────────────────────────────────────────────────────────
-(function buildHistograms() {
+function buildHistograms() {
   const groups = [
     { label: '< ₱70k\n(very poor)',     filter: d => d.gdp < 70 },
     { label: '₱70–100k\n(below avg)',   filter: d => d.gdp >= 70 && d.gdp < 100 },
@@ -1140,7 +1141,16 @@ mapObserver.observe(document.getElementById('map'));
       },
     });
   });
-})();
+}
+
+// ── KICK EVERYTHING OFF ONCE LIBRARIES + DOM ARE READY ────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  buildScatter();
+  buildBar();
+  buildHistograms();
+  mapObserver.observe(document.getElementById('map'));
+});
 </script>
 </body>
 </html>
